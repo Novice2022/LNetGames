@@ -1,16 +1,17 @@
+#  version: 1.0. Release: 1.03.2023
+
 from os import system
 from random import randint
 
 
 class XO:  # done for offline gaming
-    # done
+    
     def __init__(self, players: list[str]) -> None:
         self.__field = []
         for _ in range(3):
             self.__field.append([' ', ' ', ' '])
         self.__players = [players[0] + ' X', players[1] + ' O']
     
-    # done
     def run(self) -> None:
         """run() method starts game session"""
         endOfGame = False
@@ -23,7 +24,6 @@ class XO:  # done for offline gaming
         self.__render(note=False)
         self.__final(endOfGame)
     
-    # done
     def __getMove(self) -> None:
         while True:
             try:
@@ -40,7 +40,6 @@ class XO:  # done for offline gaming
         self.__field[coords[0] - 1][coords[1] - 1] = self.__players[0][-1]
         self.__players = self.__players[::-1]
 
-    # done
     def __render(self, note: bool=True) -> None:
         system('cls')
         if note:
@@ -50,26 +49,22 @@ class XO:  # done for offline gaming
             print('---+---+---')
         print(*[f' {e} 'for e in self.__field[2]], sep='|', end='\n\n')
     
-    # done
     def __isEndOfGame(self) -> bool:
         if any(len(set(row)) == 1 and set(row) != {' '} for row in self.__field) or any(len(set([row[i] for row in self.__field])) == 1 and set([row[i] for row in self.__field]) != {' '} for i in range(3)) or len(set([self.__field[i][j] for i in range(3) for j in range(3) if i + j == 2])) == 1 and set([self.__field[i][j] for i in range(3) for j in range(3) if i + j == 2]) != {' '} or len(set([self.__field[i][j] for i in range(3) for j in range(3) if i == j])) == 1 and set([self.__field[i][j] for i in range(3) for j in range(3) if i == j]) != {' '}:
             return True
         return False
     
-    # done
     def __final(self, anybodyWin: bool=True) -> None:
         print(f'{self.__players[1][:-2]} won!') if anybodyWin else print('Draw!')
         del self
 
 
-class SeaBattle:
-    # done
+class SeaBattle:  # done for offline gaming (beta)
     def __init__(self, players: list[str]) -> None:
         self.__players = [players[0], players[1]]
         self.__queue = 'rl'  # shoot left or right field (0 element of current string)
         self.__isEndOfGame = False
 
-    # done
     def run(self):
         """run() method starts game session"""
         self.__generateFields()
@@ -79,7 +74,6 @@ class SeaBattle:
         self.__render()
         print(self.__winner + ' won!')
 
-    # done
     def __generateFields(self) -> None:
         
         def __fill() -> list[list[str]]:  # done
@@ -273,7 +267,6 @@ class SeaBattle:
             self.field1.append([' ' for __ in range(10)])
             self.field2.append([' ' for __ in range(10)])
 
-    # done
     def __render(self) -> None:
         system('cls')        
         p1_name = self.__players[0][:10] + '... field:' if len(self.__players[0]) > 9 else self.__players[0][:10] + '\'s field:'
@@ -303,10 +296,8 @@ class SeaBattle:
             print(*line)
         # temp /
         
-    # done
     def __getMove(self) -> None:
 
-        # done
         def __request_coords(msg='') -> list[int, int]:
             print(msg)
             move = input('Shot coordinates: ')
@@ -350,7 +341,6 @@ class SeaBattle:
                 self.__player2[move[0]][move[1]] = '~'
                 self.field2[move[0]][move[1]] = '~'
 
-    # done
     def __refresh_isEndOfGame(self) -> None:
         alive_parts = 0
         for line in self.__player1:
@@ -368,12 +358,8 @@ class SeaBattle:
     def __handle_exploding(self, move: list[int]) -> None:
         
         def  __exploded(field: list[list[str]], move: list[int]) -> list[list[int], str, int]:  # [[topRowCoord, topColumnCoord], shipOrientation]
-
-            # define variables \
             line   = move[0]
             column = move[1]
-            # define variables /
-
             while line >= 0 and column >= 0:
                 try:
                     _break = 0
@@ -400,12 +386,8 @@ class SeaBattle:
             return [[line, column], ship_orientation]
         
         def __separate(field: list[list[str]], exploded_res: list[list[int], str, int], for_render=False) -> list[list[str]]:
-            
-            # define variables \
             line   = exploded_res[0][0]
             column = exploded_res[0][1]
-            # define variables /
-
             if exploded_res[1] == 0:
                 for row in range(line - 1, line + 2):
                     for col in range(column - 1, column + 2):
