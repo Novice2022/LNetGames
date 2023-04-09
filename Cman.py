@@ -1,4 +1,4 @@
-#  version: 2.1. Release: 09.03.2023
+#  version: 2.1. Release: 09.04.2023
 
 import platform, re
 from os import system
