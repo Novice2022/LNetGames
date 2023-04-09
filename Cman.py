@@ -1,4 +1,4 @@
-#  version: 2.1. Release: 09.04.2023
+#  version: 2.2. Release: 09.04.2023
 
 import platform, re
 from os import system
@@ -18,7 +18,7 @@ if _OS == 'Windows':
     def get_ethernet_info() -> str:
         return console_output('ipconfig')
     def get_installed_files() -> list[str]:
-        return list(set(re.findall(r'\w*\.py', console_output('dir').split(':')[-1][1:].split('\\')[0]))).intersection(set(['client.py', 'cman.py', 'games.py']))
+        return list(set(re.findall(r'\w*\.py', console_output('dir'))).intersection(set(['client.py', 'cman.py', 'games.py'])))
 elif _OS == 'Linux':
     def clear_console() -> int: system('clear')
     def console_output(command: str) -> str: return check_output(command, shell=True, encoding='utf-8')
@@ -28,7 +28,7 @@ elif _OS == 'Linux':
         return list(set([_file for _file in console_output('dir').replace('\n', '  ').replace('\t', '  ').split('  ')]).intersection(set(['client.py', 'cman.py', 'games.py'])))
 
 __author__ = 'Igor Zabrodin (@YandexFindMe / https://t.me/YandexFindMe)'
-__version__ = '2.1'
+__version__ = '2.2'
 __program_status__ = 1
 
 
@@ -52,7 +52,7 @@ except ModuleNotFoundError:
             try:
                 import requests
             except ModuleNotFoundError:
-                print('\tProblem in your \'pip\' configurations.\nIt is being fixed.')
+                print('\tProblem in your \'pip\' configurations.\n\tIt is being fixed.')
                 __program_status__ = -2
                 break
         elif command == 'n':
@@ -100,7 +100,7 @@ class Сlient_manager():
 
     def _handle_connection_status(self) -> str:
         def __connection_status() -> bool:
-            ethernet_info = get_ethernet_info()  # TODO: FIX Raises on Linux
+            ethernet_info = get_ethernet_info()
             return True if any(['IPv4' in ethernet_info if _OS == 'Windows' else 'inet 192.168']) else False
 
         if not __connection_status() or __connection_status() == None:
