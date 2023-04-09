@@ -1,36 +1,68 @@
-#  version: 2.0. Release: 09.04.2023
+#  version: 2.1. Release: 09.03.2023
 
-import platform, re, requests
+import platform, re
 from os import system
 from time import sleep
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError
 
 _OS = platform.system()
 
 def clear_console() -> int: ...
-def get_current_directory() -> str: ...
 def get_current_IP() -> str: ...
 def get_installed_files() -> list[str]: ...
+def console_output() -> str: ...
 
 if _OS == 'Windows':
     def clear_console() -> int: system('cls')
-    def get_current_directory() -> str:
-        return check_output('cd',  shell=True).decode(encoding=str(check_output('chcp', shell=True)).split(':')[-1][1:].split('\\')[0]).replace('\b', '')[:-2]
+    def console_output(command: str) -> str: return check_output(command, shell=True, encoding=str(check_output('chcp', shell=True)).split(':')[-1][1:].split('\\')[0])
     def get_ethernet_info() -> str:
-        return check_output('ipconfig', shell=True).decode(encoding=str(check_output('chcp', shell=True)).split(':')[-1][1:].split('\\')[0]).split('\n')
+        return console_output('ipconfig')
     def get_installed_files() -> list[str]:
-        return list(set(re.findall(r'\w*\.py', check_output('dir', shell=True, encoding=str(check_output('chcp', shell=True)).split(':')[-1][1:].split('\\')[0]))).intersection(set(['client.py', 'cman.py', 'games.py'])))
+        return list(set(re.findall(r'\w*\.py', console_output('dir').split(':')[-1][1:].split('\\')[0]))).intersection(set(['client.py', 'cman.py', 'games.py']))
 elif _OS == 'Linux':
     def clear_console() -> int: system('clear')
-    def get_current_directory() -> str:
-        return check_output('pwd', shell=True).decode(encoding='utf-8').replace('\b', '')
+    def console_output(command: str) -> str: return check_output(command, shell=True, encoding='utf-8')
     def get_ethernet_info() -> str:
-        return check_output('ifconfig', shell=True).decode(encoding='utf-8').split('\n')
+        return console_output('ifconfig')
     def get_installed_files() -> list[str]:
-        return list(set([_file for _file in check_output('dir', shell=True, encoding='utf-8').replace('\n', '  ').replace('\t', '  ').split('  ')]).intersection(set(['client.py', 'cman.py', 'games.py'])))
+        return list(set([_file for _file in console_output('dir').replace('\n', '  ').replace('\t', '  ').split('  ')]).intersection(set(['client.py', 'cman.py', 'games.py'])))
 
 __author__ = 'Igor Zabrodin (@YandexFindMe / https://t.me/YandexFindMe)'
-__version__ = '2.0'
+__version__ = '2.1'
+__program_status__ = 1
+
+
+#  ---------------------------------------------------------------------  start main logic  ---------------------------------------------------------------------
+
+clear_console()
+try:
+    import requests
+except ModuleNotFoundError:
+    print('\tMust be installed \"requests\" module.')
+    while True:
+        command = input('\tInstall [Y/n]: ')
+        if command == 'Y':
+            try:
+                console_output('pip install requests')
+            except CalledProcessError:
+                print('\tYou can install this package by youself using \'pip\'.')
+                print('\tThis manager can\'t do this because you didn\'t put \'pip\' manager to os environment path or you use other python version which \'pip\' doesn\'t in path or overloaded.')
+                print('\tYou can install python again with \'add to path\' configuration in setuper window.')
+                print('\tSee info about \'pip\' into your browser or write (@YandexFindMe / https://t.me/YandexFindMe) if you didn\'t understand.')
+            try:
+                import requests
+            except ModuleNotFoundError:
+                print('\tProblem in your \'pip\' configurations.\nIt is being fixed.')
+                __program_status__ = -2
+                break
+        elif command == 'n':
+            __program_status__ = 0
+            break
+if __program_status__ == 1:
+    clear_console()
+
+#  ----------------------------------------------------------------------  end main logic  ----------------------------------------------------------------------
+
 
 class Сlient_manager():
     """ Represents installing, uninstalling, configurating & editing files of Your client application """
@@ -58,7 +90,7 @@ class Сlient_manager():
             command = input('\n> ')
 
     def _support(self) -> None:
-        print('\n\n\tYou may enter this commands with different cases\n------------------------------------------------')
+        print('\n\n\tYou may enter this commands with different cases\n\t------------------------------------------------')
         print('\tget client                   install client')
         print('\tget games                    install games')
         print('\tupgrade                      upgrade all scripts')
@@ -69,8 +101,8 @@ class Сlient_manager():
     def _handle_connection_status(self) -> str:
         def __connection_status() -> bool:
             ethernet_info = get_ethernet_info()  # TODO: FIX Raises on Linux
-            return True if any(['IPv4' in line if _OS == 'Windows' else 'inet 192.168' in line for line in ethernet_info]) else False if (_OS == 'Linux' and 'eth0:' in ethernet_info) or _OS == 'Windows' in ethernet_info[0] else False
-        
+            return True if any(['IPv4' in ethernet_info if _OS == 'Windows' else 'inet 192.168']) else False
+
         if not __connection_status() or __connection_status() == None:
             move = input('No interner connection.\n\t* "continue": wait internet connection\n\t* "break": turn to client-manager\n\t> ')
             while not move.lower() in ['continue', 'break']:
@@ -90,7 +122,6 @@ class Сlient_manager():
         url = 'https://raw.githubusercontent.com/Novice2022/LNetGames/main/Games.py' if file_name == 'games' else 'https://raw.githubusercontent.com/Novice2022/LNetGames/main/Client.py'
         response = requests.get(url).text
         compare_versions_flag = self.__compare_versions(f'{file_name}.py', response.split('\n')[0][3:-1])
-        path = get_current_directory()
         if compare_versions_flag == 'not found':
             with open(f'{file_name}.py', 'w', encoding='utf-8') as f:
                 f.write(response.replace('\n', ''))
@@ -125,15 +156,12 @@ class Сlient_manager():
             return 'not found'
 
 
-def main() -> int():
-    clear_console()
-    try:
-        Сlient_manager()
-    except Exception as EX:
-        print('\tYou probably aren\'t connected to the internet.\n\tRefresh internet connection and retry.')
-        return -1
-    return 0
-
-
 if __name__ == "__main__":
-    print(f'Program status: {main()}')
+    if __program_status__ == 1:
+        clear_console()
+        try:
+            Сlient_manager()
+        except Exception:
+            print('\n\tYou probably aren\'t connected to the internet.\n\tRefresh internet connection and retry.\n\tThis problem for Linux is being solved.')
+            __program_status__ = -1
+    print(f'\nProgram status: {__program_status__}')
