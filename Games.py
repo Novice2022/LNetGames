@@ -1,4 +1,4 @@
-#  version: 1.0. Release: 1.03.2023
+#  version: 1.1. Release: 10.04.2023
 
 from os import system
 from random import randint
