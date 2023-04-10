@@ -1,4 +1,4 @@
-#  version: 1.1. Release: 10.04.2023
+#  version: 1.2. Release: 10.04.2023
 
 from os import system
 from random import randint
@@ -44,8 +44,8 @@ class XO:  # done for offline gaming
                         print('This field has already been used.\n')
                     else:
                         print('Two coords must be in range from 1 to 3!\n')
-            except ValueError:
-                print('You should enter just 2 integer numbers.')
+            except ValueError or IndexError:
+                print('You should enter 2 integer numbers in range from 1 to 3.')
         self.__field[coords[0] - 1][coords[1] - 1] = self.__players[0][-1]
         self.__players = self.__players[::-1]
 
