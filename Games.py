@@ -2,7 +2,16 @@
 
 from os import system
 from random import randint
+import platform
 
+_OS = platform.system()
+
+def clear_console() -> None: ...
+
+if _OS == 'Windows':
+    def clear_console() -> int: system('cls')
+elif _OS == 'Linux':
+    def clear_console() -> int: system('clear')
 
 class XO:  # done for offline gaming
     
@@ -17,14 +26,14 @@ class XO:  # done for offline gaming
         endOfGame = False
         for _ in range(9):
             self.__render()
-            self.__getMove()
+            self.__get_move()
             if self.__isEndOfGame():
                 endOfGame = True
                 break
         self.__render(note=False)
         self.__final(endOfGame)
     
-    def __getMove(self) -> None:
+    def __get_move(self) -> None:
         while True:
             try:
                 coords = list(map(int, input(f'{self.__players[0][:-2]}\'s move ({self.__players[0][-1]}): ').split()))
@@ -41,7 +50,7 @@ class XO:  # done for offline gaming
         self.__players = self.__players[::-1]
 
     def __render(self, note: bool=True) -> None:
-        system('cls')
+        clear_console()
         if note:
             print('Note row and column numbers to fill square (2 numbers from 1 to 3 divided with space).\n')
         for i in range(2):
@@ -64,211 +73,222 @@ class SeaBattle:  # done for offline gaming (beta)
         self.__players = [players[0], players[1]]
         self.__queue = 'rl'  # shoot left or right field (0 element of current string)
         self.__isEndOfGame = False
+        self.__player1 = self.__request_field(self.__players[0])
+        self.__player2 = self.__request_field(self.__players[1])
+        self.field1 = [[' ' for _ in range(10)] for __ in range(10)]
+        self.field2 = [[' ' for _ in range(10)] for __ in range(10)]
 
     def run(self):
         """run() method starts game session"""
-        self.__generateFields()
+        
         while not self.__isEndOfGame:
             self.__render()
-            self.__getMove()
+            self.__get_move()
         self.__render()
         print(self.__winner + ' won!')
 
-    def __generateFields(self) -> None:
-        
-        def __fill() -> list[list[str]]:  # done
-            field = []
-            for _ in range(10):
-                field.append([' '] * 10)
-            for ship_length in range(4, 0, -1):
-                for ship_quantity in range(5 - ship_length):
-                    while True:
-                        rotation = ['vertical', ''][randint(0, 1)]
-                        left_coord, top_coord = 0, 0
-                        if ship_length == 1:
+    def __request_field(self, player_name: str) -> list[list[str]]:
+        clear_console()
+        input('Enter to start generating field... ')
+        clear_console()
+        while True:
+            field = self.__generate_field()
+            print(f'Creating {player_name}\'s field:\n')
+            print('__|_A_B_C_D_E_F_G_H_I_J_')
+            for i, line in enumerate(field):
+                print(f'{i:>2}| ' + ' '.join(line))
+            print()
+            move = input('Save field [Y/n]: ')
+            if move == 'Y':
+                clear_console()
+                return field
+            while move != 'n':
+                move = input('Save field [Y = Yes / n = no] (Choose \'Y\' or \'n\'): ')
+            clear_console()
+
+    def __generate_field(self) -> list[list[str]]:
+        field = [[' ' for _ in range(10)] for __ in range(10)]
+        for ship_length in range(4, 0, -1):
+            for ship_quantity in range(5 - ship_length):
+                while True:
+                    rotation = ['vertical', ''][randint(0, 1)]
+                    left_coord, top_coord = 0, 0
+                    if ship_length == 1:
+                        while True:
+                            left_coord, top_coord = randint(1, 10), randint(1, 10)
+                            if top_coord == 1:
+                                if (left_coord == 1 and not '#' in [
+                                    field[0][0],
+                                    field[0][1],
+                                    field[1][0],
+                                    field[1][1]
+                                ]) or (left_coord == 10 and not '#' in [
+                                    field[0][8],
+                                    field[0][9],
+                                    field[1][8],
+                                    field[1][9]
+                                ]) or (left_coord in [_ for _ in range(2, 10)] and not '#' in [
+                                    field[0][left_coord    ],
+                                    field[0][left_coord - 1],
+                                    field[0][left_coord - 2],
+                                    field[1][left_coord    ],
+                                    field[1][left_coord - 1],
+                                    field[1][left_coord - 2]
+                                ]): break
+                            elif top_coord == 10:
+                                if (left_coord == 1 and not '#' in [
+                                    field[8][0],
+                                    field[8][1],
+                                    field[9][0],
+                                    field[9][1]
+                                ]) or (left_coord == 10 and not '#' in [
+                                    field[8][8],
+                                    field[8][9],
+                                    field[9][8],
+                                    field[9][9]
+                                ]) or (left_coord in [_ for _ in range(2, 10)] and not '#' in [
+                                    field[8][left_coord    ],
+                                    field[8][left_coord - 1],
+                                    field[8][left_coord - 2],
+                                    field[9][left_coord    ],
+                                    field[9][left_coord - 1],
+                                    field[9][left_coord - 2]
+                                ]): break
+                            else:
+                                if (left_coord == 1 and not '#' in [
+                                    field[top_coord - 2][0],
+                                    field[top_coord - 2][1],
+                                    field[top_coord - 1][0],
+                                    field[top_coord - 1][1],
+                                    field[top_coord    ][0],
+                                    field[top_coord    ][1]
+                                ]) or (left_coord == 10 and not '#' in [
+                                    field[top_coord - 2][8],
+                                    field[top_coord - 2][9],
+                                    field[top_coord - 1][8],
+                                    field[top_coord - 1][9],
+                                    field[top_coord    ][8],
+                                    field[top_coord    ][9]
+                                ]) or (left_coord in [_ for _ in range(2, 10)] and not '#' in [
+                                    field[top_coord - 2][left_coord    ],
+                                    field[top_coord - 2][left_coord - 1],
+                                    field[top_coord - 2][left_coord - 2],
+                                    field[top_coord - 1][left_coord    ],
+                                    field[top_coord - 1][left_coord - 1],
+                                    field[top_coord - 1][left_coord - 2],
+                                    field[top_coord    ][left_coord    ],
+                                    field[top_coord    ][left_coord - 1],
+                                    field[top_coord    ][left_coord - 2]
+                                ]):break
+                        field[top_coord - 1][left_coord - 1] = '#'
+                        break
+                    else:
+                        if rotation == 'vertical':
                             while True:
-                                left_coord, top_coord = randint(1, 10), randint(1, 10)
-                                if top_coord == 1:
-                                    if (left_coord == 1 and not '#' in [
-                                        field[0][0],
-                                        field[0][1],
-                                        field[1][0],
-                                        field[1][1]
-                                    ]) or (left_coord == 10 and not '#' in [
-                                        field[0][8],
-                                        field[0][9],
-                                        field[1][8],
-                                        field[1][9]
-                                    ]) or (left_coord in [_ for _ in range(2, 10)] and not '#' in [
-                                        field[0][left_coord    ],
-                                        field[0][left_coord - 1],
-                                        field[0][left_coord - 2],
-                                        field[1][left_coord    ],
-                                        field[1][left_coord - 1],
-                                        field[1][left_coord - 2]
-                                    ]): break
-                                elif top_coord == 10:
-                                    if (left_coord == 1 and not '#' in [
-                                        field[8][0],
-                                        field[8][1],
-                                        field[9][0],
-                                        field[9][1]
-                                    ]) or (left_coord == 10 and not '#' in [
-                                        field[8][8],
-                                        field[8][9],
-                                        field[9][8],
-                                        field[9][9]
-                                    ]) or (left_coord in [_ for _ in range(2, 10)] and not '#' in [
-                                        field[8][left_coord    ],
-                                        field[8][left_coord - 1],
-                                        field[8][left_coord - 2],
-                                        field[9][left_coord    ],
-                                        field[9][left_coord - 1],
-                                        field[9][left_coord - 2]
-                                    ]): break
-                                else:
-                                    if (left_coord == 1 and not '#' in [
-                                        field[top_coord - 2][0],
-                                        field[top_coord - 2][1],
-                                        field[top_coord - 1][0],
-                                        field[top_coord - 1][1],
-                                        field[top_coord    ][0],
-                                        field[top_coord    ][1]
-                                    ]) or (left_coord == 10 and not '#' in [
-                                        field[top_coord - 2][8],
-                                        field[top_coord - 2][9],
-                                        field[top_coord - 1][8],
-                                        field[top_coord - 1][9],
-                                        field[top_coord    ][8],
-                                        field[top_coord    ][9]
-                                    ]) or (left_coord in [_ for _ in range(2, 10)] and not '#' in [
-                                        field[top_coord - 2][left_coord    ],
-                                        field[top_coord - 2][left_coord - 1],
+                                try:
+                                    left_coord, top_coord = randint(1, 10), randint(1, 10)
+                                    while top_coord + ship_length > 10:
+                                        top_coord = randint(1, 10)
+                                    good_position = not ('#' in [
                                         field[top_coord - 2][left_coord - 2],
-                                        field[top_coord - 1][left_coord    ],
-                                        field[top_coord - 1][left_coord - 1],
+                                        field[top_coord - 2][left_coord - 1],
+                                        field[top_coord - 2][left_coord    ],
                                         field[top_coord - 1][left_coord - 2],
-                                        field[top_coord    ][left_coord    ],
+                                        field[top_coord - 1][left_coord - 1],
+                                        field[top_coord - 1][left_coord    ],
+                                        field[top_coord    ][left_coord - 2],
                                         field[top_coord    ][left_coord - 1],
-                                        field[top_coord    ][left_coord - 2]
-                                    ]):break
-                            field[top_coord - 1][left_coord - 1] = '#'
+                                        field[top_coord    ][left_coord    ]
+                                    ])
+                                    if good_position:
+                                        if left_coord == 1:
+                                            for row in range(top_coord - 1,  top_coord + ship_length):
+                                                if (row == 0 and field[row][1] == '#') or (row == 9 and field[row][1] == '#') or (row in [val for val in range(1, 9)] and (field[row][1] == '#' or field[row + 1][0] == '#')) or field[row + 1][left_coord - 1] == '#' or field[row - 1][left_coord - 1] == '#':
+                                                    good_position = False
+                                                    break
+                                        elif left_coord == 10:
+                                            for row in range(top_coord - 1,  top_coord + ship_length):
+                                                if (row == 0 and field[row][8] == '#') or (row == 9 and field[row][8] == '#') or (row in [val for val in range(1, 9)] and (field[row][8] == '#' or field[row + 1][9] == '#')) or field[row + 1][left_coord - 1] == '#' or field[row - 1][left_coord - 1] == '#':
+                                                    good_position = False
+                                                    break
+                                        else:
+                                            for row in range(top_coord - 1,  top_coord + ship_length):
+                                                if (row == 0 and ('#' in [field[row][left_coord - 2], field[row][left_coord]])) or (row == 9 and ('#' in [field[row][left_coord - 2], field[row][left_coord]])) or (row in [val for val in range(1, 9)] and ('#' in [
+                                                    field[row][left_coord - 2],
+                                                    field[row][left_coord],
+                                                    field[row + 1][left_coord - 2],
+                                                    field[row + 1][left_coord - 1],
+                                                    field[row + 1][left_coord]
+                                                ])) or (row == top_coord - 1 and row > 0 and '#' in [
+                                                    field[row - 1][left_coord - 2],
+                                                    field[row - 1][left_coord - 1],
+                                                    field[row - 1][left_coord]
+                                                ]):
+                                                    good_position = False
+                                                    break
+                                        if good_position:
+                                            for row in range(top_coord - 1, top_coord + ship_length - 1):
+                                                field[row][left_coord - 1] = '#'
+                                            break
+                                except IndexError: ...
                             break
                         else:
-                            if rotation == 'vertical':
-                                while True:
-                                    try:
-                                        left_coord, top_coord = randint(1, 10), randint(1, 10)
-                                        while top_coord + ship_length > 10:
-                                            top_coord = randint(1, 10)
-                                        good_position = not ('#' in [
-                                            field[top_coord - 2][left_coord - 2],
-                                            field[top_coord - 2][left_coord - 1],
-                                            field[top_coord - 2][left_coord    ],
-                                            field[top_coord - 1][left_coord - 2],
-                                            field[top_coord - 1][left_coord - 1],
-                                            field[top_coord - 1][left_coord    ],
-                                            field[top_coord    ][left_coord - 2],
-                                            field[top_coord    ][left_coord - 1],
-                                            field[top_coord    ][left_coord    ]
-                                        ])
-                                        if good_position:
-                                            if left_coord == 1:
-                                                for row in range(top_coord - 1,  top_coord + ship_length):
-                                                    if (row == 0 and field[row][1] == '#') or (row == 9 and field[row][1] == '#') or (row in [val for val in range(1, 9)] and (field[row][1] == '#' or field[row + 1][0] == '#')) or field[row + 1][left_coord - 1] == '#' or field[row - 1][left_coord - 1] == '#':
-                                                        good_position = False
-                                                        break
-                                            elif left_coord == 10:
-                                                for row in range(top_coord - 1,  top_coord + ship_length):
-                                                    if (row == 0 and field[row][8] == '#') or (row == 9 and field[row][8] == '#') or (row in [val for val in range(1, 9)] and (field[row][8] == '#' or field[row + 1][9] == '#')) or field[row + 1][left_coord - 1] == '#' or field[row - 1][left_coord - 1] == '#':
-                                                        good_position = False
-                                                        break
-                                            else:
-                                                for row in range(top_coord - 1,  top_coord + ship_length):
-                                                    if (row == 0 and ('#' in [field[row][left_coord - 2], field[row][left_coord]])) or (row == 9 and ('#' in [field[row][left_coord - 2], field[row][left_coord]])) or (row in [val for val in range(1, 9)] and ('#' in [
-                                                        field[row][left_coord - 2],
-                                                        field[row][left_coord],
-                                                        field[row + 1][left_coord - 2],
-                                                        field[row + 1][left_coord - 1],
-                                                        field[row + 1][left_coord]
-                                                    ])) or (row == top_coord - 1 and row > 0 and '#' in [
-                                                        field[row - 1][left_coord - 2],
-                                                        field[row - 1][left_coord - 1],
-                                                        field[row - 1][left_coord]
-                                                    ]):
-                                                        good_position = False
-                                                        break
-                                            if good_position:
-                                                for row in range(top_coord - 1, top_coord + ship_length - 1):
-                                                    field[row][left_coord - 1] = '#'
-                                                break
-                                    except IndexError: ...
-                                break
-                            else:
-                                while True:
-                                    try:
-                                        left_coord, top_coord = randint(1, 10), randint(1, 10)
-                                        while left_coord + ship_length > 10:
-                                            left_coord = randint(1, 10)
-                                        good_position = not('#' in [
-                                            field[top_coord - 2][left_coord - 2],
-                                            field[top_coord - 2][left_coord - 1],
-                                            field[top_coord - 2][left_coord    ],
-                                            field[top_coord - 1][left_coord - 2],
-                                            field[top_coord - 1][left_coord - 1],
-                                            field[top_coord - 1][left_coord    ],
-                                            field[top_coord    ][left_coord - 2],
-                                            field[top_coord    ][left_coord - 1],
-                                            field[top_coord    ][left_coord    ]])
-                                        if good_position:
-                                            if top_coord == 1:
-                                                for col in range(left_coord - 1,  left_coord + ship_length):
-                                                    if (col == 0 and field[1][0] == '#') or (col == 9 and field[1][9] == '#') or (col in [val for val in range(1, 9)] and (field[1][col] == '#' or field[0][col + 1] == '#')):
-                                                        good_position = False
-                                                        break
-                                                if field[top_coord - 1][left_coord - 2] == '#':
+                            while True:
+                                try:
+                                    left_coord, top_coord = randint(1, 10), randint(1, 10)
+                                    while left_coord + ship_length > 10:
+                                        left_coord = randint(1, 10)
+                                    good_position = not('#' in [
+                                        field[top_coord - 2][left_coord - 2],
+                                        field[top_coord - 2][left_coord - 1],
+                                        field[top_coord - 2][left_coord    ],
+                                        field[top_coord - 1][left_coord - 2],
+                                        field[top_coord - 1][left_coord - 1],
+                                        field[top_coord - 1][left_coord    ],
+                                        field[top_coord    ][left_coord - 2],
+                                        field[top_coord    ][left_coord - 1],
+                                        field[top_coord    ][left_coord    ]])
+                                    if good_position:
+                                        if top_coord == 1:
+                                            for col in range(left_coord - 1,  left_coord + ship_length):
+                                                if (col == 0 and field[1][0] == '#') or (col == 9 and field[1][9] == '#') or (col in [val for val in range(1, 9)] and (field[1][col] == '#' or field[0][col + 1] == '#')):
                                                     good_position = False
-                                            elif top_coord == 10:
-                                                if field[top_coord - 1][left_coord - 2] == '#':
-                                                    good_position = False
-                                                else:
-                                                    for col in range(left_coord - 1,  left_coord + ship_length):
-                                                        if (col == 0 and field[8][0] == '#') or (col == 9 and field[8][9] == '#') or (col in [val for val in range(1, 9)] and (field[8][col] == '#' or field[9][col + 1]== '#')):
-                                                            good_position = False
-                                                            break
+                                                    break
+                                            if field[top_coord - 1][left_coord - 2] == '#':
+                                                good_position = False
+                                        elif top_coord == 10:
+                                            if field[top_coord - 1][left_coord - 2] == '#':
+                                                good_position = False
                                             else:
                                                 for col in range(left_coord - 1,  left_coord + ship_length):
-                                                    if col == 0 and ('#' in [field[top_coord - 1][top_coord - 2], field[top_coord - 1][top_coord]]) or (col == 9 and ('#' in [field[top_coord - 1][top_coord - 2], field[top_coord - 1][top_coord]])) or (col in [val for val in range(1, 9)] and ('#' in [
-                                                        field[top_coord - 1][top_coord - 2],
-                                                        field[top_coord - 1][top_coord],
-                                                        field[top_coord - 2][col + 1],
-                                                        field[top_coord - 1][col + 1],
-                                                        field[top_coord    ][col + 1],
-                                                    ])) or (col == left_coord - 1 and col > 0 and '#' in [
-                                                        field[top_coord - 2][col - 1],
-                                                        field[top_coord - 1][col - 1],
-                                                        field[top_coord    ][col - 1],
-                                                    ]):
+                                                    if (col == 0 and field[8][0] == '#') or (col == 9 and field[8][9] == '#') or (col in [val for val in range(1, 9)] and (field[8][col] == '#' or field[9][col + 1]== '#')):
                                                         good_position = False
                                                         break
-                                            if good_position:
-                                                for col in range(left_coord - 1, left_coord + ship_length - 1):
-                                                    field[top_coord - 1][col] = '#'
-                                                break
-                                    except IndexError: ...
-                                break
-            return field
-
-        self.__player1 = __fill()
-        self.__player2 = __fill()
-        self.field1 = []
-        self.field2 = []
-        for _ in range(10):
-            self.field1.append([' ' for __ in range(10)])
-            self.field2.append([' ' for __ in range(10)])
+                                        else:
+                                            for col in range(left_coord - 1,  left_coord + ship_length):
+                                                if col == 0 and ('#' in [field[top_coord - 1][top_coord - 2], field[top_coord - 1][top_coord]]) or (col == 9 and ('#' in [field[top_coord - 1][top_coord - 2], field[top_coord - 1][top_coord]])) or (col in [val for val in range(1, 9)] and ('#' in [
+                                                    field[top_coord - 1][top_coord - 2],
+                                                    field[top_coord - 1][top_coord],
+                                                    field[top_coord - 2][col + 1],
+                                                    field[top_coord - 1][col + 1],
+                                                    field[top_coord    ][col + 1],
+                                                ])) or (col == left_coord - 1 and col > 0 and '#' in [
+                                                    field[top_coord - 2][col - 1],
+                                                    field[top_coord - 1][col - 1],
+                                                    field[top_coord    ][col - 1],
+                                                ]):
+                                                    good_position = False
+                                                    break
+                                        if good_position:
+                                            for col in range(left_coord - 1, left_coord + ship_length - 1):
+                                                field[top_coord - 1][col] = '#'
+                                            break
+                                except IndexError: ...
+                            break
+        return field
 
     def __render(self) -> None:
-        system('cls')        
+        clear_console()        
         p1_name = self.__players[0][:10] + '... field:' if len(self.__players[0]) > 9 else self.__players[0][:10] + '\'s field:'
         p2_name = self.__players[1][:10] + '... field:' if len(self.__players[1]) > 9 else self.__players[1][:10] + '\'s field:'
         print('\'#\' - your ship      \' \' - sea      \'X\' - damaged ship      \'~\' - missed\n\n')
@@ -286,17 +306,9 @@ class SeaBattle:  # done for offline gaming (beta)
             print(line)
         print('10| ' + str([point for point in self.field1[9]])[2:-2].replace('\', \'', ' ') +        '       10| ' + str([point for point in self.field2[9]])[2:-2].replace('\', \'', ' '))
         print('------------------------      ------------------------\n')
-        print('\n> to get move note row number and columd letter <\n'.upper())
+        print('\n> To get move enter ROW nubmer and COLUMN letter <')
         
-        # temp     print('p1:')
-        for line in self.__player1:
-            print(*line)
-        print('\np2:')
-        for line in self.__player2:
-            print(*line)
-        # temp /
-        
-    def __getMove(self) -> None:
+    def __get_move(self) -> None:
 
         def __request_coords(msg='') -> list[int, int]:
             print(msg)
@@ -518,14 +530,14 @@ class SeaBattle:  # done for offline gaming (beta)
 
 
 def main() -> None:
-    system('cls')
+    clear_console()
     choose = input('Choose the game:\n1: XO\n2: Sea battle\n\nYour choose: ').strip(' ')
     while not (choose in [1, 2] or choose in ['1', '2']):
-        system('cls')
+        clear_console()
         try: choose = int(input('\'1\' to play XO\n\'2\' to play Sea battle\n\nYour choose: '))
-        except ValueError: system('cls')
+        except ValueError: clear_console()
     choose = int(choose)
-    system('cls')
+    clear_console()
     if choose == 1:
         session = XO(input('Enter User\'s names (2 words): ').split())
         session.run()
@@ -538,14 +550,11 @@ if __name__ == '__main__':
     main()
 
 
-"""
-    .==================================================.
-    ||   .=====.      .=.  .====.   .====.  .=====.   ||
-    ||   *   //      //||  ||   \\    ||   ||    ||   ||
-    ||      //      //_||  ||___//    ||   ||         ||
-    ||     //      //``||  ||```\\    ||   || .===.   ||
-    ||    //   .  //   ||  ||    ||   ||   ||    ||   ||
-    ||   *=====* *=*  *=*  *=====*  *====*  *====*    ||
-    '=================================================='
+"""                      
+     _____    __    _____  __  _____
+    |__   |  /  \  |  _  \(__)/ ____\
+      /  /  / -- \ |     / __| /  __
+     /  /_ /  __  \|  _  \|  | \__\ \
+    |_____|__/  \__|_____/|__|\_____|
 
 """
