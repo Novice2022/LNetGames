@@ -23,8 +23,8 @@ if _OS == 'Windows':
         files = set(re.findall(r'\w*\.py', console_output('dir')))
         if not 'cman.py' in files:
             print()
-            print('\t/    please rename this file to \"cman.py\" make it avaliable to update this file automatically    \ ')
-            print('\t\   (some systems don\'t give permition for programs to rename files. Thanks for understanding)   /\n\n')
+            print('\t/  Please rename this file to \"cman.py\" to make it available to update this file automatically.  \ ')
+            print('\t\    Some systems don\'t give permition for programs to rename files. Thanks for understanding    /\n\n')
             input('Enter to continue...')
             print()
         files = list(files.intersection(set(['client.py', 'cman.py', 'games.py', 'converter.py'])))
@@ -38,8 +38,8 @@ elif _OS == 'Linux':
         files = set(re.findall(r'\w*\.py', console_output('dir')))
         if not 'cman.py' in files:
             print()
-            print('\t/    please rename this file to \"cman.py\" make it avaliable to update this file automatically    \ ')
-            print('\t\   (some systems don\'t give permition for programs to rename files. Thanks for understanding)   /\n\n')
+            print('\t/  Please rename this file to \"cman.py\" to make it available to update this file automatically.  \ ')
+            print('\t\    Some systems don\'t give permition for programs to rename files. Thanks for understanding    /\n\n')
             input('Enter to continue...')
             print()
         files = list(files.intersection(set(['client.py', 'cman.py', 'games.py', 'converter.py'])))
