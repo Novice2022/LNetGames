@@ -334,6 +334,7 @@ class Converter:
     
     def __normalise_text(self) -> str:
         """ solve it with replaceing """
+        return ''
     
     @staticmethod
     def draw(text: str) -> None: 
