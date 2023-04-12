@@ -1,24 +1,28 @@
-#  version: 2.3. Release: 12.04.2023
+#  version: 2.4. Release: 12.04.2023
 
 import platform, re
 from os import system
 from time import sleep
-from subprocess import check_output, CalledProcessError
+from subprocess import check_output, CalledProcessError, STDOUT
 
 _OS = platform.system()
 
 del platform
 
 def clear_console() -> int: ...
-def get_current_IP() -> str: ...
+def get_internet_connection_status() -> bool: ...
 def get_installed_files() -> list[str]: ...
 def console_output() -> str: ...
 
 if _OS == 'Windows':
     def clear_console() -> int: system('cls')
     def console_output(command: str) -> str: return check_output(command, shell=True, encoding=str(check_output('chcp', shell=True)).split(':')[-1][1:].split('\\')[0])
-    def get_ethernet_info() -> str:
-        return console_output('ipconfig')
+    def get_internet_connection_status() -> bool:
+        try:
+            check_output('ping -n 1 -w 1000 142.251.40.164', shell=True, encoding=str(check_output('chcp', shell=True)).split(':')[-1][1:].split('\\')[0], )
+            return True
+        except CalledProcessError:
+            return False
     def get_installed_files() -> list[str]:
         files = set(re.findall(r'\w*\.py', console_output('dir')))
         if not 'cman.py' in files:
@@ -32,8 +36,12 @@ if _OS == 'Windows':
 elif _OS == 'Linux':
     def clear_console() -> int: system('clear')
     def console_output(command: str) -> str: return check_output(command, shell=True, encoding='utf-8')
-    def get_ethernet_info() -> str:
-        return console_output('ifconfig')
+    def get_internet_connection_status() -> bool:
+        try:
+            if len(check_output('ping -c 1 142.251.40.164', shell=True, encoding='utf-8', stderr=STDOUT).split('\n')) > 2:
+                return True
+        except CalledProcessError:
+            return False
     def get_installed_files() -> list[str]:
         files = set(re.findall(r'\w*\.py', console_output('dir')))
         if not 'cman.py' in files:
@@ -46,7 +54,7 @@ elif _OS == 'Linux':
         return files
 
 __author__ = 'Igor Zabrodin (@YandexFindMe / https://t.me/YandexFindMe)'
-__version__ = '2.3'
+__version__ = '2.4'
 __program_status__ = 1
 
 
@@ -119,22 +127,20 @@ class Сlient_manager():
         print('\tclear                        clear current window\n')
 
     def __handle_connection_status(self) -> str:
-        def __connection_status() -> bool:
-            ethernet_info = get_ethernet_info()
-            return True if any(['IPv4' in ethernet_info if _OS == 'Windows' else 'inet 192.168']) else False
-
-        if not __connection_status() or __connection_status() == None:
-            move = input('No internet connection.\n\t* "continue": wait internet connection\n\t* "break": turn to client-manager\n\t> ')
+        if not get_internet_connection_status():
+            move = input('\n\tNo internet connection.\n\t\t* "continue": wait internet connection\n\t\t* "break": turn to client-manager\n\n\t> ')
             while not move.lower() in ['continue', 'break']:
-                move = input('\n\t* "continue": wait internet connection\n\t* "break": turn to client-manager\n\t> ')
-            if move == 'break': return 'break'
+                move = input('\n\t\t* "continue": wait internet connection\n\t\t* "break": turn to client-manager\n\n\t> ')
+            if move == 'break':
+                return 'break'
         timer = 0
         while True:
-            if __connection_status(): return 'OK'
-            if timer == 0: print('\twaiting internet connection')
+            if get_internet_connection_status():
+                return 'OK'
+            if timer == 0: print()
+            if timer % 2.5 == 0: print('\twaiting internet connection')
             sleep(.5)
             timer += 0.5
-            if timer % 10 == 0: print('\twaiting internet connection')
 
     def __install(self, file_name: str) -> None:
         if self.__handle_connection_status() == 'break':
@@ -146,7 +152,7 @@ class Сlient_manager():
                 f.write(response.replace('\n', ''))
                 print(f'\tInst: {file_name}.py ')
                 return None
-        print(f'\t{file_name}.py actually inastalled. Try \"upgrade\"')
+        print(f'\t{file_name}.py actually inastalled (try \"upgrade\" to sync with latest version).')
 
     def __upgrade(self) -> str or None:
         if self.__handle_connection_status() == 'break':
